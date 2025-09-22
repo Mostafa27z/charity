@@ -30,71 +30,95 @@ class BeneficiaryController extends Controller
     /**
      * تخزين مستفيد جديد.
      */
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'association_id' => 'required|exists:associations,id',
-            'national_id'    => 'required|string|max:20|unique:beneficiaries,national_id',
-            'first_name'     => 'required|string|max:255',
-            'last_name'      => 'required|string|max:255',
-            'gender'         => 'nullable|in:male,female',
-            'birth_date'     => 'nullable|date',
-            'phone'          => 'nullable|string|max:20',
-            'address'        => 'nullable|string',
-            'family_size'    => 'nullable|integer',
-            'income'         => 'nullable|numeric',
-            'notes'          => 'nullable|string',
-        ]);
+    // ✅ تخزين مستفيد جديد مع أقارب
+public function store(Request $request)
+{
+    $validated = $request->validate([
+        'association_id' => 'required|exists:associations,id',
+        'national_id'    => 'required|string|max:20|unique:beneficiaries,national_id',
+        'first_name'     => 'required|string|max:255',
+        'last_name'      => 'required|string|max:255',
+        'gender'         => 'nullable|in:male,female',
+        'birth_date'     => 'nullable|date',
+        'phone'          => 'nullable|string|max:20',
+        'address'        => 'nullable|string',
+        'family_size'    => 'nullable|integer',
+        'income'         => 'nullable|numeric',
+        'notes'          => 'nullable|string',
+        // relatives is array
+        'relatives.*.name'         => 'nullable|string|max:255',
+        'relatives.*.national_id'  => 'nullable|string|max:20',
+        'relatives.*.gender'       => 'nullable|in:male,female',
+        'relatives.*.birth_date'   => 'nullable|date',
+        'relatives.*.phone'        => 'nullable|string|max:20',
+        'relatives.*.relation_type'=> 'nullable|string|max:100',
+        'relatives.*.notes'        => 'nullable|string',
+    ]);
 
-        $beneficiary = Beneficiary::create($validated);
+    $beneficiary = Beneficiary::create($validated);
 
-        return redirect()
-            ->route('admin.beneficiaries.show', $beneficiary->id)
-            ->with('success', 'تم إضافة المستفيد بنجاح ✅');
+    if($request->has('relatives')){
+        foreach ($request->relatives as $rel) {
+            if (!empty($rel['name'])) {
+                $beneficiary->relatives()->create($rel);
+            }
+        }
     }
 
-    /**
-     * عرض مستفيد واحد.
-     */
-    public function show(Beneficiary $beneficiary)
+    return redirect()
+        ->route('admin.beneficiaries.show', $beneficiary->id)
+        ->with('success', 'تم إضافة المستفيد بنجاح ✅');
+}
+
+// ✅ تحديث مع الأقارب
+public function update(Request $request, Beneficiary $beneficiary)
+{
+    $validated = $request->validate([
+        'association_id' => 'required|exists:associations,id',
+        'national_id'    => 'required|string|max:20|unique:beneficiaries,national_id,' . $beneficiary->id,
+        'first_name'     => 'required|string|max:255',
+        'last_name'      => 'required|string|max:255',
+        'gender'         => 'nullable|in:male,female',
+        'birth_date'     => 'nullable|date',
+        'phone'          => 'nullable|string|max:20',
+        'address'        => 'nullable|string',
+        'family_size'    => 'nullable|integer',
+        'income'         => 'nullable|numeric',
+        'notes'          => 'nullable|string',
+        'relatives.*.name'         => 'nullable|string|max:255',
+        'relatives.*.national_id'  => 'nullable|string|max:20',
+        'relatives.*.gender'       => 'nullable|in:male,female',
+        'relatives.*.birth_date'   => 'nullable|date',
+        'relatives.*.phone'        => 'nullable|string|max:20',
+        'relatives.*.relation_type'=> 'nullable|string|max:100',
+        'relatives.*.notes'        => 'nullable|string',
+    ]);
+
+    $beneficiary->update($validated);
+
+    // احذف الأقارب القدامى ثم أضف الجدد
+    $beneficiary->relatives()->delete();
+    if($request->has('relatives')){
+        foreach ($request->relatives as $rel) {
+            if (!empty($rel['name'])) {
+                $beneficiary->relatives()->create($rel);
+            }
+        }
+    }
+
+    return redirect()
+        ->route('admin.beneficiaries.show', $beneficiary->id)
+        ->with('success', 'تم تحديث المستفيد بنجاح ✏️');
+}
+public function show(Beneficiary $beneficiary)
     {
         $beneficiary->load(['relatives','association']);
         return view('admin.beneficiaries.show', compact('beneficiary'));
     }
-
-    /**
-     * عرض فورم التعديل.
-     */
     public function edit(Beneficiary $beneficiary)
     {
         $associations = Association::all();
         return view('admin.beneficiaries.edit', compact('beneficiary','associations'));
-    }
-
-    /**
-     * تحديث مستفيد.
-     */
-    public function update(Request $request, Beneficiary $beneficiary)
-    {
-        $validated = $request->validate([
-            'association_id' => 'required|exists:associations,id',
-            'national_id'    => 'required|string|max:20|unique:beneficiaries,national_id,' . $beneficiary->id,
-            'first_name'     => 'required|string|max:255',
-            'last_name'      => 'required|string|max:255',
-            'gender'         => 'nullable|in:male,female',
-            'birth_date'     => 'nullable|date',
-            'phone'          => 'nullable|string|max:20',
-            'address'        => 'nullable|string',
-            'family_size'    => 'nullable|integer',
-            'income'         => 'nullable|numeric',
-            'notes'          => 'nullable|string',
-        ]);
-
-        $beneficiary->update($validated);
-
-        return redirect()
-            ->route('admin.beneficiaries.show', $beneficiary->id)
-            ->with('success', 'تم تحديث المستفيد بنجاح ✏️');
     }
 
     /**
