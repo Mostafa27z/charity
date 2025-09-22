@@ -51,7 +51,7 @@ class AidController extends Controller
 
         $aid = Aid::create($validated);
 
-        return redirect()->route('admin.aids.show', $aid->id)
+        return redirect()->route('admin.aids.index')
             ->with('success', '✅ تم إضافة المساعدة بنجاح');
     }
 

@@ -84,4 +84,22 @@ class AssociationController extends Controller
         return redirect()->route('admin.associations.index')
                          ->with('success', 'تم حذف الجمعية بنجاح ❌');
     }
+    /**
+ * عرض تفاصيل جمعية واحدة مع المستخدمين ومساهماتهم
+ */
+public function show(Association $association)
+{
+    // جلب الجمعية مع المستخدمين وكل مساعداتهم
+    $association->load([
+        'users' => function ($q) {
+            $q->withCount('aids')
+              ->withSum('aids', 'amount');
+        },
+        'aids'  // جميع المساعدات الخاصة بالجمعية
+    ]);
+
+    return view('admin.associations.show', compact('association'));
+}
+
+    
 }

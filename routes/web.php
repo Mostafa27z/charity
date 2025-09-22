@@ -17,7 +17,10 @@ use App\Http\Controllers\Admin\DashboardController;
 // API routes for associations
 Route::middleware('auth:sanctum')->name('admin.associations.')->group(function () {
     Route::get('/associations', [AssociationController::class, 'index'])->name('index');       // كل الجمعيات
-    Route::post('/associations', [AssociationController::class, 'store'])->name('store');      // إنشاء جمعية
+    Route::post('/associations', [AssociationController::class, 'store'])->name('store');  
+    Route::get('/associations/create', [AssociationController::class, 'create'])->name('create');
+        Route::get('/associations/edit/{association}', [AssociationController::class, 'edit'])->name('edit');    // إنشاء جمعية
+    // إنشاء جمعية
     Route::get('/associations/{association}', [AssociationController::class, 'show'])->name('show'); // عرض جمعية واحدة
     Route::put('/associations/{association}', [AssociationController::class, 'update'])->name('update'); // تعديل
     Route::delete('/associations/{association}', [AssociationController::class, 'destroy'])->name('destroy'); // حذف
