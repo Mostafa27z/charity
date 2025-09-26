@@ -8,6 +8,7 @@
     <form method="POST" action="{{ route('admin.beneficiaries.store') }}">
         @csrf
 
+        {{-- بيانات المستفيد --}}
         <div class="grid grid-cols-2 gap-4">
             <x-input name="national_id" label="الرقم القومي" required/>
             <x-input name="first_name" label="الاسم الأول" required/>
@@ -35,12 +36,14 @@
 </div>
 
 <script>
+const wrapper = document.getElementById('relatives-wrapper');
 document.getElementById('add-relative').addEventListener('click', function(){
-    const wrapper = document.getElementById('relatives-wrapper');
     const index = wrapper.children.length;
     wrapper.insertAdjacentHTML('beforeend', `
-        <div class="grid grid-cols-2 gap-4 border p-3 rounded bg-gray-50">
-            <input name="relatives[${index}][name]" class="border p-2 rounded" placeholder="اسم القريب">
+        <div class="grid grid-cols-2 gap-4 border p-3 rounded bg-gray-50 relative">
+            <button type="button"
+                    class="absolute top-2 left-2 text-red-600 remove-relative">❌</button>
+            <input name="relatives[${index}][name]" class="border p-2 rounded" placeholder="اسم القريب" required>
             <input name="relatives[${index}][national_id]" class="border p-2 rounded" placeholder="رقم قومي">
             <select name="relatives[${index}][gender]" class="border p-2 rounded">
                 <option value="">النوع</option>
@@ -53,6 +56,13 @@ document.getElementById('add-relative').addEventListener('click', function(){
             <textarea name="relatives[${index}][notes]" class="border p-2 rounded" placeholder="ملاحظات"></textarea>
         </div>
     `);
+});
+
+// 🟢 زر حذف القريب
+wrapper.addEventListener('click', function(e){
+    if(e.target.classList.contains('remove-relative')){
+        e.target.closest('div').remove();
+    }
 });
 </script>
 @endsection

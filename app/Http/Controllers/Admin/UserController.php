@@ -13,11 +13,40 @@ class UserController extends Controller
     /**
      * Display a listing of the resource.
      */
-    public function index()
-    {
-        $users = User::with('association')->paginate(10);
-        return view('admin.users.index', compact('users'));
+    public function index(Request $request)
+{
+    $query = User::with('association');
+
+    // ✅ البحث بالكلمة (الاسم أو الإيميل أو الهاتف)
+    if ($search = $request->input('search')) {
+        $query->where(function ($q) use ($search) {
+            $q->where('name', 'like', "%{$search}%")
+              ->orWhere('email', 'like', "%{$search}%")
+              ->orWhere('phone', 'like', "%{$search}%");
+        });
     }
+
+    // ✅ فلترة الجمعية
+    if ($association = $request->input('association_id')) {
+        $query->where('association_id', $association);
+    }
+
+    // ✅ فلترة الدور
+    if ($role = $request->input('role')) {
+        $query->where('role', $role);
+    }
+
+    // ✅ فلترة الحالة
+    if ($status = $request->input('status')) {
+        $query->where('status', $status);
+    }
+
+    $users = $query->latest()->paginate(10)->withQueryString(); // الحفاظ على الفلاتر مع الصفحات
+    $associations = \App\Models\Association::all();
+
+    return view('admin.users.index', compact('users','associations'));
+}
+
 
     /**
      * Show the form for creating a new resource.
@@ -39,7 +68,7 @@ class UserController extends Controller
             'email'          => 'required|email|unique:users,email',
             'phone'          => 'nullable|string|max:20',
             'password'       => 'required|string|min:6',
-            'role'           => 'required|in:admin,user',
+            'role'           => 'required|in:admin,user,moderator',
             'status'         => 'required|in:active,inactive',
         ]);
 
@@ -78,7 +107,7 @@ class UserController extends Controller
             'email'          => 'required|email|unique:users,email,' . $user->id,
             'phone'          => 'nullable|string|max:20',
             'password'       => 'nullable|string|min:6',
-            'role'           => 'required|in:admin,user',
+            'role'           => 'required|in:admin,user,moderator',
             'status'         => 'required|in:active,inactive',
         ]);
 
