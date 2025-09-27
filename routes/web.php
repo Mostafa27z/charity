@@ -65,14 +65,22 @@ Route::middleware('auth:sanctum')
 use App\Http\Controllers\User\AidController as UserAidController;
 use App\Http\Controllers\User\BeneficiaryController as UserBeneficiaryController;
 use App\Http\Controllers\User\DashboardController as UserDashboardController;
+use App\Http\Controllers\User\UsersController;
+
 Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
-    Route::resource('aids', UserAidController::class)->only(['index','create','store']);
+    Route::resource('users', UsersController::class);
+});
+Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
+    Route::resource('aids', UserAidController::class)->only([
+    'index','create','store','show','edit','update'
+]);
+
 });
 
 
 Route::middleware(['auth'])->prefix('user')->name('user.')->group(function () {
     Route::resource('beneficiaries', UserBeneficiaryController::class)
-         ->only(['index','create','store','show']);
+         ->only(['index','create','store','show', 'edit' , 'update']);
 });
 Route::middleware(['auth'])
     ->prefix('user')
@@ -81,6 +89,6 @@ Route::middleware(['auth'])
         Route::get('/dashboard', [UserDashboardController::class, 'index'])
              ->name('dashboard.index');
 
-        Route::post('/dashboard/add-user', [UserDashboardController::class, 'storeUser'])
-             ->name('dashboard.add-user');
+        // Route::post('/dashboard/add-user', [UserDashboardController::class, 'storeUser'])
+        //      ->name('dashboard.add-user');
     });

@@ -15,10 +15,19 @@
             </select>
         </div>
 
-        <div class="mb-4">
-            <label class="block">نوع المساعدة</label>
-            <input type="text" name="aid_type" class="border p-2 w-full" required>
-        </div>
+       <div class="mb-4">
+    <label class="block">نوع المساعدة</label>
+    <select name="aid_type" class="border p-2 w-full" required>
+        <option value="">-- اختر النوع --</option>
+        <option value="financial">مالية</option>
+        <option value="food">غذائية</option>
+        <option value="medical">طبية</option>
+        <option value="education">تعليمية</option>
+        <option value="clothing">ملابس</option>
+        <option value="other">أخرى</option>
+    </select>
+</div>
+
 
         <div class="mb-4">
             <label class="block">القيمة</label>

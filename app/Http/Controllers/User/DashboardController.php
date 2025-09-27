@@ -3,59 +3,67 @@
 namespace App\Http\Controllers\User;
 
 use App\Http\Controllers\Controller;
-use App\Models\Aid;
-use App\Models\Association;
-use App\Models\Beneficiary;
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
+use App\Models\{Aid, Beneficiary, User};
+use Illuminate\Support\Facades\DB;
 
 class DashboardController extends Controller
 {
-    /**
-     * Show dashboard with charity statistics and user-invite form.
-     */
     public function index()
     {
-        $user = auth()->user();
-        $association = $user->association;
+        $associationId = auth()->user()->association_id;
 
-        // ✅ Calculate overview stats for this charity
+        // ✅ Summary statistics
         $stats = [
-            'beneficiaries_count' => Beneficiary::where('association_id', $association->id)->count(),
-            'aids_count'          => Aid::where('association_id', $association->id)->count(),
-            'users_count'         => User::where('association_id', $association->id)->count(),
-            'total_aid_amount'    => Aid::where('association_id', $association->id)->sum('amount'),
+            'beneficiaries_count' => Beneficiary::where('association_id', $associationId)->count(),
+            'aids_count'          => Aid::where('association_id', $associationId)->count(),
+            'users_count'         => User::where('association_id', $associationId)->count(),
+            'total_aid_amount'    => Aid::where('association_id', $associationId)->sum('amount'),
         ];
 
-        return view('user.dashboard', compact('stats', 'association'));
+        // ✅ Aid breakdown by type
+        $aidTypes = Aid::select('aid_type', DB::raw('COUNT(*) as count'), DB::raw('SUM(amount) as total_amount'))
+            ->where('association_id', $associationId)
+            ->groupBy('aid_type')
+            ->orderByDesc('count')
+            ->get();
+
+        // ✅ Monthly aid trend (last 6 months)
+        $monthlyAids = Aid::select(
+                DB::raw('DATE_FORMAT(aid_date, "%Y-%m") as month'),
+                DB::raw('SUM(amount) as total')
+            )
+            ->where('association_id', $associationId)
+            ->where('aid_date', '>=', now()->subMonths(6))
+            ->groupBy('month')
+            ->orderBy('month')
+            ->pluck('total','month');
+
+        // ✅ Users status
+        $userStatus = User::where('association_id', $associationId)
+            ->select('status', DB::raw('COUNT(*) as count'))
+            ->groupBy('status')
+            ->pluck('count','status');
+
+        // ✅ Recent activities
+        $recentAids = Aid::with('beneficiary')
+            ->where('association_id', $associationId)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        $recentBeneficiaries = Beneficiary::where('association_id', $associationId)
+            ->latest()
+            ->take(5)
+            ->get();
+
+        return view('user.dashboard', [
+            'stats'              => $stats,
+            'aidTypes'           => $aidTypes,
+            'monthlyAids'        => $monthlyAids,
+            'userStatus'         => $userStatus,
+            'recentAids'         => $recentAids,
+            'recentBeneficiaries'=> $recentBeneficiaries,
+            'association'        => auth()->user()->association,
+        ]);
     }
-
-    /**
-     * Store a new user for the same charity.
-     */
-    public function storeUser(Request $request)
-{
-    $validated = $request->validate([
-        'name' => 'required|string|max:255',
-        'email' => 'required|email|unique:users,email',
-        'password' => 'required|string|min:6|confirmed',
-    ]);
-
-    $newUser = User::create([
-        'association_id' => auth()->user()->association_id,
-        'name' => $validated['name'],
-        'email' => $validated['email'],
-        'password' => bcrypt($validated['password']),
-        'role' => 'user',  // or whatever default role
-        'status' => 'active'
-    ]);
-
-    // ✅ Return 201 JSON instead of redirect
-    return response()->json([
-        'message' => 'User created successfully',
-        'user'    => $newUser
-    ], 201);
-}
-
 }
