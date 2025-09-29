@@ -12,6 +12,9 @@ use App\Http\Controllers\Admin\DashboardController;
 | Web Routes
 |--------------------------------------------------------------------------
 */
+Route::get('/', function () {
+    return view('welcome');
+})->name('home');
 
 
 // API routes for associations
@@ -92,3 +95,4 @@ Route::middleware(['auth'])
         // Route::post('/dashboard/add-user', [UserDashboardController::class, 'storeUser'])
         //      ->name('dashboard.add-user');
     });
+

@@ -20,7 +20,7 @@
             <div class="flex space-x-4 space-x-reverse">
                 @guest
                     <a href="{{ route('login') }}" class="hover:text-secondary transition">تسجيل الدخول</a>
-                    <a href="{{ route('register') }}" class="hover:text-secondary transition">إنشاء حساب</a>
+                    {{-- <a href="{{ route('register') }}" class="hover:text-secondary transition">إنشاء حساب</a> --}}
                 @else
                     <span class="font-medium">مرحباً، {{ auth()->user()->name }}</span>
                     <form method="POST" action="{{ route('logout') }}" class="inline">
